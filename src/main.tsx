@@ -11,6 +11,7 @@ import Movies from "./routes/movies";
 import { DevSupport } from "@react-buddy/ide-toolbox";
 import { ComponentPreviews, useInitial } from "./dev";
 import SingleMovie from "./routes/single-movie";
+import { getMovie, getMovies } from "./api/omdb.ts";
 
 const router = createBrowserRouter([
   {
@@ -31,18 +32,19 @@ const router = createBrowserRouter([
             return redirect("/?s=pokemon");
           }
 
-          return await fetch(
-            `https://www.omdbapi.com/?s=${searchQuery}&y=${yearQuery}&type=${typeQuery}&page=${pageQuery}&apikey=955822d2`,
-          );
+          return await getMovies({
+            searchQuery,
+            yearQuery,
+            typeQuery,
+            pageQuery,
+          });
         },
       },
       {
         path: "/movie/:imdbID",
         element: <SingleMovie />,
         loader: async ({ params }): Promise<Response> => {
-          return await fetch(
-            `https://www.omdbapi.com/?i=${params.imdbID}&apikey=955822d2`,
-          );
+          return await getMovie(params);
         },
       },
     ],
