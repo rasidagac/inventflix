@@ -1,26 +1,27 @@
 import { Col, Flex, Input, InputNumber, Row, Select, Table } from "antd";
 import { useLoaderData, useSearchParams } from "react-router-dom";
-import { debounce, fromEntries } from "remeda";
+import { debounce } from "remeda";
 import { Omdb, Search } from "../../types/Omdb.ts";
-import { useCallback, useEffect, useMemo } from "react";
-import { paginationConfig, tableColumnConfig } from "./config.tsx";
+import { useCallback, useMemo } from "react";
+import { options, paginationConfig, tableColumnConfig } from "./config.tsx";
 
 export default function Movies() {
   const [searchParams, setSearchParams] = useSearchParams();
   const movies = useLoaderData() as Omdb | undefined;
 
-  const handleChange = useCallback(
-    (name: string, value: string | undefined) => {
+  const handleFilterChange = useCallback(
+    (name: string, value: string) => {
       setSearchParams((prev) => {
         const searchParams = new URLSearchParams(prev);
-        searchParams.set(name, value || "");
+        searchParams.set(name, value);
+        searchParams.delete("page");
         return searchParams.toString();
       });
     },
     [setSearchParams],
   );
 
-  const debouncer = debounce(handleChange, { waitMs: 500 });
+  const debouncer = debounce(handleFilterChange, { waitMs: 500 });
 
   const pagination = useMemo(
     () => paginationConfig(movies, searchParams),
@@ -28,29 +29,13 @@ export default function Movies() {
   );
   const columns = useMemo(() => tableColumnConfig, []);
 
-  const restFilter = useMemo(
-    () =>
-      Object.fromEntries(
-        Array.from(searchParams.entries()).filter(([key]) =>
-          ["s", "y", "type"].includes(key),
-        ),
-      ),
-    [searchParams],
+  const selectDefaultOption = options.find(
+    (item) => item.value === searchParams.get("type"),
   );
-
-  const searchParamObj = useMemo(
-    () => fromEntries([...searchParams.entries()]),
-    [searchParams],
-  );
-
-  useEffect(() => {
-    if (!searchParamObj.s && !searchParamObj.y && !searchParamObj.type)
-      handleChange("page", "1");
-  }, [searchParamObj.s, searchParamObj.y, searchParamObj.type]);
 
   return (
     <Flex vertical gap="large">
-      <h1>OMDB Publishings</h1>
+      <h1 className="text-4xl font-bold">OMDB Publishings</h1>
       <Row justify="space-between" align="middle" gutter={[16, 16]}>
         <Col span={8}>
           <Input.Search
@@ -59,7 +44,7 @@ export default function Movies() {
             defaultValue={searchParams.get("s") || ""}
             loading={!movies}
             onChange={(e) => {
-              debouncer.call("s", e.currentTarget.value);
+              debouncer.call("s", e.currentTarget.value || "");
             }}
             autoFocus
           />
@@ -70,26 +55,22 @@ export default function Movies() {
             placeholder="Search a release year"
             defaultValue={searchParams.get("y") || ""}
             onChange={(e) => {
-              debouncer.call("y", e);
+              debouncer.call("y", e ? e.toString() : "");
             }}
             className="w-full"
           />
         </Col>
         <Col span={8}>
           <Select
+            placeholder="Select a type"
             className="w-full"
             size="large"
-            placeholder="Select a type"
             allowClear
-            defaultValue={searchParams.get("type") || ""}
+            defaultValue={selectDefaultOption}
             onChange={(e) => {
-              debouncer.call("type", e);
+              debouncer.call("type", (e as unknown as string) || "");
             }}
-            options={[
-              { label: "Movie", value: "movie" },
-              { label: "Series", value: "series" },
-              { label: "Episode", value: "episode" },
-            ]}
+            options={options}
           />
         </Col>
       </Row>
@@ -101,7 +82,10 @@ export default function Movies() {
         loading={!movies}
         pagination={pagination}
         onChange={(pagination) =>
-          handleChange("page", pagination.current?.toString())
+          setSearchParams(() => {
+            searchParams.set("page", pagination.current?.toString() || "");
+            return searchParams.toString();
+          })
         }
       />
     </Flex>

@@ -10,6 +10,7 @@ import Root from "./routes/root";
 import Movies from "./routes/movies";
 import { DevSupport } from "@react-buddy/ide-toolbox";
 import { ComponentPreviews, useInitial } from "./dev";
+import SingleMovie from "./routes/single-movie";
 
 const router = createBrowserRouter([
   {
@@ -17,7 +18,6 @@ const router = createBrowserRouter([
     element: <Root />,
     children: [
       {
-        path: "/search",
         element: <Movies />,
         index: true,
         loader: async ({ request }): Promise<Response> => {
@@ -27,8 +27,8 @@ const router = createBrowserRouter([
           const pageQuery =
             new URL(request.url).searchParams.get("page") || "1";
 
-          if (!searchQuery) {
-            return redirect("/search?s=pokemon");
+          if (searchQuery === null) {
+            return redirect("/?s=pokemon");
           }
 
           return await fetch(
@@ -37,7 +37,8 @@ const router = createBrowserRouter([
         },
       },
       {
-        path: "/:imdbID",
+        path: "/movie/:imdbID",
+        element: <SingleMovie />,
         loader: async ({ params }): Promise<Response> => {
           return await fetch(
             `https://www.omdbapi.com/?i=${params.imdbID}&apikey=955822d2`,

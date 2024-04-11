@@ -1,4 +1,4 @@
-import { Image, TableProps } from "antd";
+import { Button, Image, TableProps } from "antd";
 import { Omdb, Search } from "../../types/Omdb.ts";
 import { Link } from "react-router-dom";
 
@@ -38,7 +38,12 @@ export const tableColumnConfig: tableColumnConfig = [
   {
     title: "Action",
     dataIndex: "imdbID",
-    render: (imdbID) => <Link to={`../${imdbID}`}>Detail</Link>,
+    align: "center",
+    render: (imdbID) => (
+      <Link to={`/movie/${imdbID}`}>
+        <Button size="large">Detail</Button>
+      </Link>
+    ),
   },
 ];
 
@@ -51,3 +56,9 @@ export const paginationConfig = (
   showSizeChanger: false,
   total: Number(movies?.totalResults),
 });
+
+export const options = [
+  { label: "Movie", value: "movie" },
+  { label: "Series", value: "series" },
+  { label: "Episode", value: "episode" },
+];
